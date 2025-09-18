@@ -174,8 +174,7 @@ function YourMainHabitApp() {
           <DailyQuoteWidget 
             habits={habits}
             goals={goals}
-            onViewFull={() => setShowFullQuote(true)}
-          />
+           />
         </div>
 
         {/* Dashboard Grid */}

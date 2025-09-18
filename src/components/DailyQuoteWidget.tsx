@@ -1,7 +1,6 @@
-// src/components/DailyQuoteWidget.tsx
+// src/components/DailyQuoteWidget.tsx - Mobile Optimized Version
 
 import React, { useState, useEffect } from 'react';
-import { Quote, Sparkles, ExternalLink } from 'lucide-react';
 import { 
   generateDailyQuote, 
   detectUserStruggle, 
@@ -22,12 +21,11 @@ interface DailyQuoteWidgetProps {
     category: string;
     targetDate: string;
   }>;
-  onViewFull?: () => void;
   className?: string;
 }
 
-// Compact widget version for dashboard
-export function DailyQuoteWidget({ habits, goals, onViewFull, className = '' }: DailyQuoteWidgetProps) {
+// Mobile-optimized widget version for app store apps
+export function DailyQuoteWidget({ habits, goals, className = '' }: DailyQuoteWidgetProps) {
   const [currentQuote, setCurrentQuote] = useState<PersonalizedQuote | null>(null);
 
   useEffect(() => {
@@ -45,245 +43,95 @@ export function DailyQuoteWidget({ habits, goals, onViewFull, className = '' }: 
 
   const getMoodGradient = (mood: string) => {
     switch (mood) {
-      case 'energizing': return 'from-yellow-400 to-orange-500';
-      case 'calming': return 'from-blue-400 to-cyan-500';
-      case 'motivational': return 'from-red-400 to-pink-500';
-      case 'inspirational': return 'from-purple-400 to-indigo-500';
-      case 'reflective': return 'from-green-400 to-teal-500';
-      default: return 'from-gray-400 to-gray-500';
+      case 'energizing': return 'from-orange-400 to-pink-500';
+      case 'calming': return 'from-blue-400 to-purple-500';
+      case 'motivational': return 'from-red-500 to-orange-500';
+      case 'inspirational': return 'from-purple-500 to-indigo-600';
+      case 'reflective': return 'from-green-400 to-blue-500';
+      default: return 'from-gray-400 to-gray-600';
+    }
+  };
+
+  const getMoodIcon = (mood: string) => {
+    switch (mood) {
+      case 'energizing': return '⚡';
+      case 'calming': return '🌙';
+      case 'motivational': return '💪';
+      case 'inspirational': return '✨';
+      case 'reflective': return '🤔';
+      default: return '💡';
     }
   };
 
   if (!currentQuote) {
     return (
-      <div className={`bg-white rounded-lg shadow-md p-4 ${className}`}>
+      <div className={`bg-white rounded-2xl shadow-lg overflow-hidden ${className}`}>
         <div className="animate-pulse">
-          <div className="h-3 bg-gray-200 rounded w-1/4 mb-3"></div>
-          <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-3/4 mb-3"></div>
-          <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+          <div className="bg-gradient-to-r from-gray-300 to-gray-400 h-32 flex items-center justify-center">
+            <div className="text-white text-lg">Loading inspiration...</div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow ${className}`}>
-      {/* Compact Header */}
-      <div className={`bg-gradient-to-r ${getMoodGradient(currentQuote.mood)} p-4 text-white`}>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Quote className="w-4 h-4" />
-            <span className="text-sm font-medium">Daily Quote</span>
-            {currentQuote.relevanceScore > 15 && (
-              <Sparkles className="w-4 h-4 animate-pulse" />
-            )}
-          </div>
-          <span className="text-xs opacity-75 capitalize">{currentQuote.mood}</span>
+    <div className={`bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 ${className}`}>
+      {/* Mobile-Optimized Header */}
+      <div className={`bg-gradient-to-br ${getMoodGradient(currentQuote.mood)} p-6 text-white relative overflow-hidden`}>
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-4 right-4 text-6xl">{getMoodIcon(currentQuote.mood)}</div>
+          <div className="absolute bottom-2 left-2 text-4xl opacity-50">💬</div>
         </div>
-
-        {/* Shortened Quote */}
-        <blockquote className="text-sm leading-relaxed mb-2">
-          "{currentQuote.text.length > 120 
-            ? currentQuote.text.substring(0, 120) + '...' 
-            : currentQuote.text}"
-        </blockquote>
-
-        <div className="flex items-center justify-between">
-          <cite className="text-xs opacity-90">— {currentQuote.author}</cite>
-          {onViewFull && (
-            <button
-              onClick={onViewFull}
-              className="text-xs opacity-75 hover:opacity-100 flex items-center gap-1"
-            >
-              View Full <ExternalLink className="w-3 h-3" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Personalization Footer */}
-      {currentQuote.relevanceScore > 10 && (
-        <div className="p-3 bg-gray-50 border-t">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-3 h-3 text-blue-500" />
-            <span className="text-xs text-gray-600">
-              {currentQuote.relatedHabits.length > 0 
-                ? `Relates to your "${currentQuote.relatedHabits[0]}" habit`
-                : currentQuote.relatedGoals.length > 0
-                ? `Connects to your "${currentQuote.relatedGoals[0]}" goal`
-                : `Matches your ${currentQuote.category[0]} focus`}
-            </span>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Example Dashboard Integration
-export function DashboardWithQuote() {
-  // Mock data - replace with real data in your app
-  const mockHabits = [
-    { title: 'Exercise 30 minutes', category: 'Health & Fitness', streak: 5, lastCompleted: new Date().toISOString() },
-    { title: 'Read for 20 minutes', category: 'Personal Development', streak: 3, lastCompleted: new Date().toISOString() },
-    { title: 'Meditate daily', category: 'Health & Fitness', streak: 0, lastCompleted: null }
-  ];
-
-  const mockGoals = [
-    { title: 'Lose 20 pounds', category: 'Health & Fitness', targetDate: '2025-12-31' },
-    { title: 'Read 24 books this year', category: 'Personal Development', targetDate: '2025-12-31' }
-  ];
-
-  const [showFullQuote, setShowFullQuote] = useState(false);
-
-  return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Habit Dashboard</h1>
-        <p className="text-gray-600">Track your progress and stay motivated</p>
-      </div>
-
-      {/* Main Dashboard Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Left Column - Stats */}
-        <div className="space-y-4">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Habit Overview</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Active Habits</span>
-                <span className="font-medium">{mockHabits.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Current Streaks</span>
-                <span className="font-medium">{mockHabits.filter(h => h.streak > 0).length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Total Goals</span>
-                <span className="font-medium">{mockGoals.length}</span>
-              </div>
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">{getMoodIcon(currentQuote.mood)}</span>
+              <span className="text-sm font-medium opacity-90">Daily Inspiration</span>
+            </div>
+            <div className="text-xs opacity-75 capitalize px-2 py-1 bg-white/20 rounded-full">
+              {currentQuote.mood}
             </div>
           </div>
 
-          {/* Daily Quote Widget */}
-          <DailyQuoteWidget 
-            habits={mockHabits}
-            goals={mockGoals}
-            onViewFull={() => setShowFullQuote(true)}
-          />
-        </div>
+          {/* Quote Text - Mobile Optimized */}
+          <blockquote className="text-base md:text-lg font-medium leading-relaxed mb-4 line-clamp-3">
+            "{currentQuote.text}"
+          </blockquote>
 
-        {/* Middle Column - Habits List */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Today's Habits</h3>
-          <div className="space-y-3">
-            {mockHabits.map((habit, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <span className="font-medium text-gray-900">{habit.title}</span>
-                  <div className="text-sm text-gray-500">
-                    {habit.streak > 0 ? `${habit.streak} day streak` : 'Not started'}
-                  </div>
-                </div>
-                <button className={`w-6 h-6 rounded-full border-2 ${
-                  habit.lastCompleted ? 'bg-green-500 border-green-500' : 'border-gray-300'
-                }`}>
-                  {habit.lastCompleted && <span className="text-white text-xs">✓</span>}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right Column - Goals */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Active Goals</h3>
-          <div className="space-y-3">
-            {mockGoals.map((goal, index) => (
-              <div key={index} className="p-3 border border-gray-200 rounded-lg">
-                <span className="font-medium text-gray-900 block">{goal.title}</span>
-                <span className="text-sm text-gray-500">{goal.category}</span>
-                <div className="mt-2 text-xs text-gray-400">
-                  Target: {new Date(goal.targetDate).toLocaleDateString()}
-                </div>
-              </div>
-            ))}
+          <div className="flex items-center justify-between">
+            <cite className="text-sm opacity-90">— {currentQuote.author}</cite>
+            <div className="text-xs opacity-75">
+              {getCurrentTimeContext() === 'morning' && '🌅 Morning'}
+              {getCurrentTimeContext() === 'afternoon' && '☀️ Afternoon'}
+              {getCurrentTimeContext() === 'evening' && '🌙 Evening'}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Full Quote Modal */}
-      {showFullQuote && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Today's Inspiration</h2>
-                <button
-                  onClick={() => setShowFullQuote(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </button>
-              </div>
-              {/* Full DailyQuote component would go here */}
-              <div className="text-center py-8">
-                <p className="text-gray-600">Full DailyQuote component would be rendered here</p>
-                <button
-                  onClick={() => setShowFullQuote(false)}
-                  className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                >
-                  Close
-                </button>
-              </div>
+      {/* Personalization Footer - Mobile Optimized */}
+      {currentQuote.relevanceScore > 10 && (
+        <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100">
+          <div className="flex items-center gap-3">
+            <span className="text-blue-500 text-lg">✨</span>
+            <div className="flex-1">
+              <span className="text-sm text-gray-700 font-medium">
+                {currentQuote.relatedHabits.length > 0 
+                  ? `Perfect for your "${currentQuote.relatedHabits[0]}" journey`
+                  : currentQuote.relatedGoals.length > 0
+                  ? `Aligns with your "${currentQuote.relatedGoals[0]}" goal`
+                  : `Matches your ${currentQuote.category[0]} focus`}
+              </span>
+            </div>
+            <div className="text-xs text-gray-500 bg-white px-2 py-1 rounded-full">
+              {Math.min(100, currentQuote.relevanceScore * 2)}% match
             </div>
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-// Usage Instructions Component
-export function QuoteSystemUsage() {
-  return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-6">Daily Quote System - Usage Guide</h2>
-      
-      <div className="space-y-6">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="font-semibold text-blue-900 mb-2">🎯 How the AI Personalization Works</h3>
-          <div className="text-sm text-blue-800 space-y-2">
-            <p><strong>Smart Matching:</strong> Analyzes your habits and goals to find relevant quotes</p>
-            <p><strong>Context Awareness:</strong> Considers time of day, recent struggles, and successes</p>
-            <p><strong>Relevance Scoring:</strong> Shows how well each quote matches your journey</p>
-            <p><strong>Mood-Based:</strong> Delivers energizing quotes in morning, calming ones in evening</p>
-          </div>
-        </div>
-
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <h3 className="font-semibold text-green-900 mb-2">🚀 Integration Examples</h3>
-          <div className="text-sm text-green-800 space-y-1">
-            <p>• <strong>Dashboard Widget:</strong> Compact version for main dashboard</p>
-            <p>• <strong>Full Component:</strong> Detailed view with personalization insights</p>
-            <p>• <strong>Morning Notification:</strong> Send daily quote as push notification</p>
-            <p>• <strong>Habit Completion:</strong> Show motivational quote after completing habits</p>
-          </div>
-        </div>
-
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h3 className="font-semibold text-yellow-900 mb-2">💡 Customization Options</h3>
-          <div className="text-sm text-yellow-800 space-y-1">
-            <p>• Add more quotes to the database for specific niches</p>
-            <p>• Adjust relevance scoring weights based on user feedback</p>
-            <p>• Create themed quote collections (motivation, wisdom, humor)</p>
-            <p>• Implement user quote submissions and favorites</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

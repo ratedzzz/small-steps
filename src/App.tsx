@@ -114,9 +114,7 @@ function App() {
               <DailyQuoteWidget 
                 habits={convertedHabits}
                 goals={convertedGoals}
-                onViewFull={() => setShowFullQuote(true)}
-                className="shadow-none border-0"
-              />
+               />
             </Paper>
           </Box>
 
