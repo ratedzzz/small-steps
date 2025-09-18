@@ -108,11 +108,12 @@ export function BadgeDetailModal({ badge, isEarned, progress, onClose }: BadgeDe
 
   // Convert progress to nearest 5% for CSS class
   const progressClass = `progress-${Math.round(progress / 5) * 5}`;
+  const gradientClass = getRarityGradient(badge.rarity);
 
   return (
     <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full modal-content">
-        <div className={`bg-gradient-to-r ${getRarityGradient(badge.rarity)} p-6 text-white rounded-t-lg`}>
+        <div className={`bg-gradient-to-r ${gradientClass} p-6 text-white rounded-t-lg`}>
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-3">
               <span className="text-5xl">{badge.icon}</span>
@@ -360,43 +361,54 @@ interface NewBadgeNotificationProps {
   onViewCollection: () => void;
 }
 
-[{
-	"resource": "/c:/Users/zzzis/small-steps/src/components/BadgeDisplay.tsx",
-	"owner": "typescript",
-	"code": "2304",
-	"severity": 8,
-	"message": "Cannot find name 'gradientClass'.",
-	"source": "ts",
-	"startLineNumber": 374,
-	"startColumn": 43,
-	"endLineNumber": 374,
-	"endColumn": 56,
-	"origin": "extHost1"
-},{
-	"resource": "/c:/Users/zzzis/small-steps/src/components/BadgeDisplay.tsx",
-	"owner": "typescript",
-	"code": "2353",
-	"severity": 8,
-	"message": "Object literal may only specify known properties, and 'animation' does not exist in type 'ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<...>'.",
-	"source": "ts",
-	"startLineNumber": 376,
-	"startColumn": 11,
-	"endLineNumber": 376,
-	"endColumn": 20,
-	"origin": "extHost1"
-},{
-	"resource": "/c:/Users/zzzis/small-steps/src/components/BadgeDisplay.tsx",
-	"owner": "typescript",
-	"code": "1382",
-	"severity": 8,
-	"message": "Unexpected token. Did you mean `{'>'}` or `&gt;`?",
-	"source": "ts",
-	"startLineNumber": 378,
-	"startColumn": 7,
-	"endLineNumber": 378,
-	"endColumn": 8,
-	"origin": "extHost1"
-}]
+export function NewBadgeNotification({ badge, onClose, onViewCollection }: NewBadgeNotificationProps) {
+  useEffect(() => {
+    // Auto-close after 5 seconds
+    const timer = setTimeout(onClose, 5000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  // Extract gradient class to avoid inline style warning
+  const gradientClass = getRarityGradient(badge.rarity);
+
+  return (
+    <div className="fixed top-4 right-4 z-50 max-w-sm">
+      <div className={`bg-gradient-to-r ${gradientClass} p-4 rounded-lg shadow-lg text-white badge-notification-enter`}>
+        <div className="flex items-start gap-3">
+          <span className="text-3xl">{badge.icon}</span>
+          <div className="flex-1">
+            <h3 className="font-bold text-lg mb-1">Badge Earned! 🎉</h3>
+            <h4 className="font-semibold">{badge.name}</h4>
+            <p className="text-sm opacity-90 mb-2">{badge.description}</p>
+            <div className="text-xs opacity-75">+{badge.points} points</div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-white hover:bg-white/20 rounded-full p-1 w-6 h-6 flex items-center justify-center text-sm"
+          >
+            ✕
+          </button>
+        </div>
+        
+        <div className="flex gap-2 mt-3">
+          <button
+            onClick={onViewCollection}
+            className="notification-button-primary px-3 py-1 rounded text-xs"
+          >
+            View Collection
+          </button>
+          <button
+            onClick={onClose}
+            className="notification-button-secondary px-3 py-1 rounded text-xs"
+          >
+            Dismiss
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Badge Summary Widget for Dashboard
 interface BadgeSummaryWidgetProps {
   earnedBadgeIds: string[];
