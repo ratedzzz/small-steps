@@ -310,7 +310,7 @@ export function BadgeGallery({ earnedBadgeIds, userStats, showOnlyEarned = false
         </label>
       </div>
 
-      {/* Badge Grid */}
+      {/* Badge Grid - Show All Badges */}
       <div className="badge-grid mb-6">
         {filteredBadges.map(badge => {
           const isEarned = earnedBadgeIds.includes(badge.id);
@@ -409,35 +409,29 @@ export function NewBadgeNotification({ badge, onClose, onViewCollection }: NewBa
   );
 }
 
-// Badge Summary Widget for Dashboard
+// Badge Summary Widget for Dashboard - CLEANED UP VERSION
 interface BadgeSummaryWidgetProps {
   earnedBadgeIds: string[];
   recentBadges: Badge[];
   totalPoints: number;
   userLevel: { level: number; title: string };
-  onViewAll: () => void;
 }
 
 export function BadgeSummaryWidget({ 
   earnedBadgeIds, 
   recentBadges, 
   totalPoints, 
-  userLevel, 
-  onViewAll 
+  userLevel
 }: BadgeSummaryWidgetProps) {
+  const allBadges = getAllBadges();
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4">
         <h3 className="font-semibold text-gray-900 flex items-center gap-2">
           <span>🏆</span>
           Achievements
         </h3>
-        <button
-          onClick={onViewAll}
-          className="text-sm text-blue-600 hover:text-blue-800"
-        >
-          View All
-        </button>
       </div>
 
       {/* Level and Points */}
@@ -445,38 +439,35 @@ export function BadgeSummaryWidget({
         <div>
           <div className="text-sm text-gray-600">Level {userLevel.level}</div>
           <div className="font-semibold text-gray-900">{userLevel.title}</div>
-        </div>
-        <div className="text-right">
-          <div className="text-lg font-bold text-blue-600">{totalPoints}</div>
-          <div className="text-xs text-gray-500">points</div>
+          <div className="text-sm text-gray-500">{totalPoints} points</div>
         </div>
       </div>
 
-      {/* Recent Badges */}
-      {recentBadges.length > 0 && (
-        <div>
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Recent Badges</h4>
-          <div className="flex gap-2 overflow-x-auto">
-            {recentBadges.slice(0, 4).map(badge => (
+      {/* All Badges Display */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-sm font-medium text-gray-700">Badges Earned {earnedBadgeIds.length} / {allBadges.length}</h4>
+        </div>
+        
+        <div className="grid grid-cols-4 gap-2 max-h-64 overflow-y-auto">
+          {allBadges.map(badge => {
+            const isEarned = earnedBadgeIds.includes(badge.id);
+            return (
               <BadgeCard
                 key={badge.id}
                 badge={badge}
-                isEarned={true}
+                isEarned={isEarned}
                 size="small"
               />
-            ))}
-          </div>
+            );
+          })}
         </div>
-      )}
+      </div>
 
       {/* Progress Summary */}
       <div className="mt-4 pt-4 border-t border-gray-200">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600">Badges Earned</span>
-          <span className="font-medium">{earnedBadgeIds.length} / {getAllBadges().length}</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-          <div className={`progress-fill-blue h-2 rounded-full progress-bar progress-${Math.round((earnedBadgeIds.length / getAllBadges().length) * 100 / 5) * 5}`} />
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className={`progress-fill-blue h-2 rounded-full progress-bar progress-${Math.round((earnedBadgeIds.length / allBadges.length) * 100 / 5) * 5}`} />
         </div>
       </div>
     </div>

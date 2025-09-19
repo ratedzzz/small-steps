@@ -184,7 +184,6 @@ function App() {
                     recentBadges={recentBadges}
                     totalPoints={totalPoints}
                     userLevel={userLevel}
-                    onViewAll={() => setShowBadgeGallery(true)}
                   />
                 </Paper>
               </Box>

@@ -1,4 +1,4 @@
-// src/components/DailyQuoteWidget.tsx - Mobile Optimized Version
+// src/components/DailyQuoteWidget.tsx - Clean Version
 
 import React, { useState, useEffect } from 'react';
 import { 
@@ -11,30 +11,47 @@ import {
 
 interface DailyQuoteWidgetProps {
   habits: Array<{
-    title: string;
-    category: string;
-    streak: number;
-    lastCompleted: string | null;
+    id?: string;
+    title?: string;
+    category?: string;
+    streak?: number;
+    lastCompleted?: string | null;
   }>;
   goals: Array<{
-    title: string;
-    category: string;
-    targetDate: string;
+    id?: string;
+    title?: string;
+    category?: string;
+    targetDate?: string;
+    isCompleted?: boolean;
   }>;
   className?: string;
 }
 
-// Mobile-optimized widget version for app store apps
 export function DailyQuoteWidget({ habits, goals, className = '' }: DailyQuoteWidgetProps) {
   const [currentQuote, setCurrentQuote] = useState<PersonalizedQuote | null>(null);
 
   useEffect(() => {
+    // Provide default values for optional properties
+    const safeHabits = habits.map(habit => ({
+      title: habit.title || 'Untitled Habit',
+      category: habit.category || 'General',
+      streak: habit.streak || 0,
+      lastCompleted: habit.lastCompleted || null
+    }));
+
+    const safeGoals = goals.map(goal => ({
+      title: goal.title || 'Untitled Goal',
+      category: goal.category || 'General',
+      targetDate: goal.targetDate || '2025-12-31',
+      isCompleted: goal.isCompleted || false
+    }));
+
     const userContext = {
-      habits,
-      goals,
+      habits: safeHabits,
+      goals: safeGoals,
       timeOfDay: getCurrentTimeContext(),
-      recentStruggle: detectUserStruggle(habits),
-      recentSuccess: detectUserSuccess(habits)
+      recentStruggle: detectUserStruggle(safeHabits),
+      recentSuccess: detectUserSuccess(safeHabits)
     };
 
     const quote = generateDailyQuote(userContext);
@@ -52,17 +69,6 @@ export function DailyQuoteWidget({ habits, goals, className = '' }: DailyQuoteWi
     }
   };
 
-  const getMoodIcon = (mood: string) => {
-    switch (mood) {
-      case 'energizing': return '⚡';
-      case 'calming': return '🌙';
-      case 'motivational': return '💪';
-      case 'inspirational': return '✨';
-      case 'reflective': return '🤔';
-      default: return '💡';
-    }
-  };
-
   if (!currentQuote) {
     return (
       <div className={`bg-white rounded-2xl shadow-lg overflow-hidden ${className}`}>
@@ -77,61 +83,23 @@ export function DailyQuoteWidget({ habits, goals, className = '' }: DailyQuoteWi
 
   return (
     <div className={`bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 ${className}`}>
-      {/* Mobile-Optimized Header */}
-      <div className={`bg-gradient-to-br ${getMoodGradient(currentQuote.mood)} p-6 text-white relative overflow-hidden`}>
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-4 right-4 text-6xl">{getMoodIcon(currentQuote.mood)}</div>
-          <div className="absolute bottom-2 left-2 text-4xl opacity-50">💬</div>
-        </div>
+      <div className={`bg-gradient-to-br ${getMoodGradient(currentQuote.mood)} p-4 text-white relative overflow-hidden`}>
         
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">{getMoodIcon(currentQuote.mood)}</span>
-              <span className="text-sm font-medium opacity-90">Daily Inspiration</span>
-            </div>
-            <div className="text-xs opacity-75 capitalize px-2 py-1 bg-white/20 rounded-full">
-              {currentQuote.mood}
-            </div>
-          </div>
+        {/* Centered Title */}
+        <div className="text-center mb-4">
+          <h2 className="text-lg font-medium">Daily Inspiration Quote</h2>
+        </div>
 
-          {/* Quote Text - Mobile Optimized */}
-          <blockquote className="text-base md:text-lg font-medium leading-relaxed mb-4 line-clamp-3">
-            "{currentQuote.text}"
-          </blockquote>
-
-          <div className="flex items-center justify-between">
-            <cite className="text-sm opacity-90">— {currentQuote.author}</cite>
-            <div className="text-xs opacity-75">
-              {getCurrentTimeContext() === 'morning' && '🌅 Morning'}
-              {getCurrentTimeContext() === 'afternoon' && '☀️ Afternoon'}
-              {getCurrentTimeContext() === 'evening' && '🌙 Evening'}
-            </div>
-          </div>
+        {/* Left-aligned Quote */}
+        <div className="text-left">
+          <p className="text-base md:text-lg font-medium leading-relaxed mb-3">
+            {currentQuote.text}
+          </p>
+          <p className="text-sm opacity-90">— {currentQuote.author}</p>
         </div>
       </div>
 
-      {/* Personalization Footer - Mobile Optimized */}
-      {currentQuote.relevanceScore > 10 && (
-        <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100">
-          <div className="flex items-center gap-3">
-            <span className="text-blue-500 text-lg">✨</span>
-            <div className="flex-1">
-              <span className="text-sm text-gray-700 font-medium">
-                {currentQuote.relatedHabits.length > 0 
-                  ? `Perfect for your "${currentQuote.relatedHabits[0]}" journey`
-                  : currentQuote.relatedGoals.length > 0
-                  ? `Aligns with your "${currentQuote.relatedGoals[0]}" goal`
-                  : `Matches your ${currentQuote.category[0]} focus`}
-              </span>
-            </div>
-            <div className="text-xs text-gray-500 bg-white px-2 py-1 rounded-full">
-              {Math.min(100, currentQuote.relevanceScore * 2)}% match
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }

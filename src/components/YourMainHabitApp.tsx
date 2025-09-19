@@ -213,12 +213,11 @@ function YourMainHabitApp() {
 
           {/* Badge Summary Widget */}
           <BadgeSummaryWidget
-            earnedBadgeIds={earnedBadges}
-            recentBadges={recentBadges}
-            totalPoints={totalPoints}
-            userLevel={userLevel}
-            onViewAll={() => setShowBadgeGallery(true)}
-          />
+          earnedBadgeIds={earnedBadges}
+          recentBadges={recentBadges}
+          totalPoints={totalPoints}
+          userLevel={userLevel}
+         />
         </div>
 
         {/* Today's Habits */}
