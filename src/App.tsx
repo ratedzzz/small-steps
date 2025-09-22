@@ -1,3 +1,4 @@
+import { SubscriptionModal } from './components/SubscriptionModal'
 import { Container, Typography, Box, Button, Paper, Tabs, Tab } from '@mui/material'
 import { Add, List, CalendarToday, Flag, EmojiEvents } from '@mui/icons-material'
 import { useHabitStore } from './store'
@@ -14,14 +15,20 @@ import { BadgeGallery, BadgeSummaryWidget, NewBadgeNotification } from './compon
 import { DailyQuote } from './components/DailyQuote'
 import { DailyQuoteWidget } from './components/DailyQuoteWidget'
 
-function App() {
+// Import subscription system
+import { SubscriptionProvider, useSubscription } from './hooks/useSubscription'
+import { LimitReachedBanner } from './components/SubscriptionComponents'
+
+function AppContent() {
   const [showHabitForm, setShowHabitForm] = useState(false)
   const [showGoalForm, setShowGoalForm] = useState(false)
   const [currentTab, setCurrentTab] = useState(0)
   const [showBadgeGallery, setShowBadgeGallery] = useState(false)
   const [showFullQuote, setShowFullQuote] = useState(false)
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false)
   
   const { habits, goals } = useHabitStore()
+  const { subscription, hasReachedLimit } = useSubscription()
 
   // Convert your store data to the format expected by the badge system
   const convertedHabits = habits.map(habit => ({
@@ -67,6 +74,13 @@ function App() {
     setCurrentTab(newValue)
   }
 
+  const handleUpgrade = () => {
+  setShowSubscriptionModal(true)
+  }
+
+  const canAddHabit = !hasReachedLimit('habits', habits.length)
+  const canAddGoal = !hasReachedLimit('goals', goals.length)
+
   return (
     <>
       {/* Badge Notifications */}
@@ -90,6 +104,24 @@ function App() {
           <Typography variant="h4" component="h1" gutterBottom>
             Small Steps - Habit Tracker
           </Typography>
+
+          {/* Subscription Info */}
+          <Box sx={{ mb: 2, p: 2, bgcolor: subscription.currentTier === 'free' ? 'grey.100' : 'primary.main', color: subscription.currentTier === 'free' ? 'text.primary' : 'white', borderRadius: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="body2">
+                {subscription.plan.name} Plan
+              </Typography>
+              {subscription.currentTier === 'free' && (
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={handleUpgrade}
+                >
+                  Upgrade
+                </Button>
+              )}
+            </Box>
+          </Box>
 
           {/* Level and Points Display */}
           <Box sx={{ mb: 3, p: 2, bgcolor: 'primary.main', color: 'white', borderRadius: 1 }}>
@@ -131,14 +163,22 @@ function App() {
           {/* Tab Content */}
           {currentTab === 0 && (
             <>
+              {/* Habit Limit Banner */}
+              <LimitReachedBanner
+                limitType="habits"
+                currentCount={habits.length}
+                onUpgrade={handleUpgrade}
+              />
+
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
                 <Typography variant="h6">
-                  Your Habits ({habits.length})
+                  Your Habits ({habits.length}/{subscription.plan.limits.maxHabits === 'unlimited' ? '∞' : subscription.plan.limits.maxHabits})
                 </Typography>
                 <Button
                   variant="contained"
                   startIcon={<Add />}
                   onClick={() => setShowHabitForm(true)}
+                  disabled={!canAddHabit}
                 >
                   Add Habit
                 </Button>
@@ -149,14 +189,22 @@ function App() {
 
           {currentTab === 1 && (
             <>
+              {/* Goal Limit Banner */}
+              <LimitReachedBanner
+                limitType="goals"
+                currentCount={goals.length}
+                onUpgrade={handleUpgrade}
+              />
+
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
                 <Typography variant="h6">
-                  Your Goals ({goals.length})
+                  Your Goals ({goals.length}/{subscription.plan.limits.maxGoals === 'unlimited' ? '∞' : subscription.plan.limits.maxGoals})
                 </Typography>
                 <Button
                   variant="contained"
                   startIcon={<Add />}
                   onClick={() => setShowGoalForm(true)}
+                  disabled={!canAddGoal}
                 >
                   Add Goal
                 </Button>
@@ -267,8 +315,25 @@ function App() {
           </div>
         </div>
       )}
-    </>
-  )
-}
+      
+        {/* Subscription Modal */}
+        {showSubscriptionModal && (
+        <SubscriptionModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        highlightTier="premium"
+       />
+      )}
+      </>
+     )
+   }
 
-export default App
+    function App() {
+     return (
+      <SubscriptionProvider>
+       <AppContent />
+      </SubscriptionProvider>
+     )
+    }
+
+    export default App

@@ -443,25 +443,32 @@ export function BadgeSummaryWidget({
         </div>
       </div>
 
-      {/* All Badges Display */}
+      {/* Earned Badges Display */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <h4 className="text-sm font-medium text-gray-700">Badges Earned {earnedBadgeIds.length} / {allBadges.length}</h4>
         </div>
         
-        <div className="grid grid-cols-4 gap-2 max-h-64 overflow-y-auto">
-          {allBadges.map(badge => {
-            const isEarned = earnedBadgeIds.includes(badge.id);
-            return (
-              <BadgeCard
-                key={badge.id}
-                badge={badge}
-                isEarned={isEarned}
-                size="small"
-              />
-            );
-          })}
-        </div>
+        {earnedBadgeIds.length > 0 ? (
+          <div className="grid grid-cols-4 gap-2 max-h-64 overflow-y-auto">
+            {allBadges
+              .filter(badge => earnedBadgeIds.includes(badge.id))
+              .map(badge => (
+                <BadgeCard
+                  key={badge.id}
+                  badge={badge}
+                  isEarned={true}
+                  size="small"
+                />
+              ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <div className="text-4xl mb-2">🏆</div>
+            <p className="text-sm">No badges earned yet</p>
+            <p className="text-xs">Complete habits to earn your first badge!</p>
+          </div>
+        )}
       </div>
 
       {/* Progress Summary */}
