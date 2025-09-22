@@ -1,8 +1,7 @@
-import { SubscriptionModal } from './components/SubscriptionModal'
 import { Container, Typography, Box, Button, Paper, Tabs, Tab } from '@mui/material'
 import { Add, List, CalendarToday, Flag, EmojiEvents } from '@mui/icons-material'
 import { useHabitStore } from './store'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import HabitForm from './components/HabitForm'
 import HabitList from './components/HabitList'
 import HabitCalendar from './components/HabitCalendar'
@@ -18,6 +17,7 @@ import { DailyQuoteWidget } from './components/DailyQuoteWidget'
 // Import subscription system
 import { SubscriptionProvider, useSubscription } from './hooks/useSubscription'
 import { LimitReachedBanner } from './components/SubscriptionComponents'
+import { SubscriptionDropdown } from './components/SubscriptionDropdown'
 
 function AppContent() {
   const [showHabitForm, setShowHabitForm] = useState(false)
@@ -25,7 +25,8 @@ function AppContent() {
   const [currentTab, setCurrentTab] = useState(0)
   const [showBadgeGallery, setShowBadgeGallery] = useState(false)
   const [showFullQuote, setShowFullQuote] = useState(false)
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false)
+  const [showSubscriptionDropdown, setShowSubscriptionDropdown] = useState(false)
+  const upgradeButtonRef = useRef<HTMLButtonElement>(null)
   
   const { habits, goals } = useHabitStore()
   const { subscription, hasReachedLimit } = useSubscription()
@@ -75,7 +76,7 @@ function AppContent() {
   }
 
   const handleUpgrade = () => {
-  setShowSubscriptionModal(true)
+    setShowSubscriptionDropdown(true)
   }
 
   const canAddHabit = !hasReachedLimit('habits', habits.length)
@@ -113,6 +114,7 @@ function AppContent() {
               </Typography>
               {subscription.currentTier === 'free' && (
                 <Button
+                  ref={upgradeButtonRef}
                   variant="contained"
                   size="small"
                   onClick={handleUpgrade}
@@ -265,6 +267,13 @@ function AppContent() {
         </Box>
       </Container>
 
+      {/* Subscription Dropdown */}
+      <SubscriptionDropdown
+        isOpen={showSubscriptionDropdown}
+        onClose={() => setShowSubscriptionDropdown(false)}
+        anchorRef={upgradeButtonRef}
+      />
+
       {/* Badge Gallery Modal */}
       {showBadgeGallery && (
         <div className="fixed inset-0 bg-black/50 z-40">
@@ -315,25 +324,16 @@ function AppContent() {
           </div>
         </div>
       )}
-      
-        {/* Subscription Modal */}
-        {showSubscriptionModal && (
-        <SubscriptionModal
-        isOpen={showSubscriptionModal}
-        onClose={() => setShowSubscriptionModal(false)}
-        highlightTier="premium"
-       />
-      )}
-      </>
-     )
-   }
+    </>
+  )
+}
 
-    function App() {
-     return (
-      <SubscriptionProvider>
-       <AppContent />
-      </SubscriptionProvider>
-     )
-    }
+function App() {
+  return (
+    <SubscriptionProvider>
+      <AppContent />
+    </SubscriptionProvider>
+  )
+}
 
-    export default App
+export default App
