@@ -58,16 +58,22 @@ export function DailyQuoteWidget({ habits, goals, className = '' }: DailyQuoteWi
     setCurrentQuote(quote);
   }, [habits, goals]);
 
-  const getMoodGradient = (mood: string) => {
-    switch (mood) {
-      case 'energizing': return 'from-orange-400 to-pink-500';
-      case 'calming': return 'from-blue-400 to-purple-500';
-      case 'motivational': return 'from-red-500 to-orange-500';
-      case 'inspirational': return 'from-purple-500 to-indigo-600';
-      case 'reflective': return 'from-green-400 to-blue-500';
-      default: return 'from-gray-400 to-gray-600';
-    }
-  };
+  const getMoodStyle = (mood: string) => {
+  switch (mood) {
+    case 'energizing': 
+      return { background: 'linear-gradient(135deg, #ff6b35 0%, #f7931e 100%)' }; // Orange gradient
+    case 'calming': 
+      return { background: 'linear-gradient(135deg, #74b9ff 0%, #0984e3 100%)' }; // Blue gradient  
+    case 'motivational': 
+      return { background: 'linear-gradient(135deg, #fd79a8 0%, #e84393 100%)' }; // Pink gradient
+    case 'inspirational': 
+      return { background: 'linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%)' }; // Purple gradient
+    case 'reflective': 
+      return { background: 'linear-gradient(135deg, #00b894 0%, #00cec9 100%)' }; // Teal gradient
+    default: 
+      return { background: 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)' }; // Default lighter purple
+  }
+};
 
   if (!currentQuote) {
     return (
@@ -82,24 +88,28 @@ export function DailyQuoteWidget({ habits, goals, className = '' }: DailyQuoteWi
   }
 
   return (
-    <div className={`bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 ${className}`}>
-      <div className={`bg-gradient-to-br ${getMoodGradient(currentQuote.mood)} p-4 text-white relative overflow-hidden`}>
-        
-        {/* Centered Title */}
-        <div className="text-center mb-4">
-          <h2 className="text-lg font-medium">Daily Inspiration Quote</h2>
-        </div>
-
-        {/* Left-aligned Quote */}
-        <div className="text-left">
-          <p className="text-base md:text-lg font-medium leading-relaxed mb-3">
-            {currentQuote.text}
-          </p>
-          <p className="text-sm opacity-90">— {currentQuote.author}</p>
-        </div>
+  <div className={`bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 ${className}`}>
+    <div 
+      className="p-4 text-white relative overflow-hidden"
+      style={getMoodStyle(currentQuote.mood)}
+    >
+      
+      {/* Centered Title with left padding */}
+      <div className="text-center mb-4" style={{ marginLeft: '20px' }}>
+        <h2 className="text-lg font-medium">Daily Inspiration Quote</h2>
       </div>
 
-
+      {/* Left-aligned Quote with left padding */}
+      <div 
+        className="text-left"
+        style={{ marginLeft: '20px' }}
+      >
+        <p className="text-base md:text-lg font-medium leading-relaxed mb-3">
+          {currentQuote.text}
+        </p>
+        <p className="text-sm opacity-90">— {currentQuote.author}</p>
+      </div>
     </div>
-  );
+  </div>
+);
 }

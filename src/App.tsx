@@ -1,12 +1,13 @@
 import { Container, Typography, Box, Button, Paper, Tabs, Tab } from '@mui/material'
 import { Add, List, CalendarToday, Flag, EmojiEvents } from '@mui/icons-material'
 import { useHabitStore } from './store'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import HabitForm from './components/HabitForm'
 import HabitList from './components/HabitList'
 import HabitCalendar from './components/HabitCalendar'
 import GoalForm from './components/GoalForm'
 import GoalList from './components/GoalList'
+
 
 // Import the new badge and quote components
 import { useBadgeSystem } from './hooks/useBadgeSystem'
@@ -19,6 +20,8 @@ import { SubscriptionProvider, useSubscription } from './hooks/useSubscription'
 import { LimitReachedBanner } from './components/SubscriptionComponents'
 import { SubscriptionDropdown } from './components/SubscriptionDropdown'
 
+
+
 function AppContent() {
   const [showHabitForm, setShowHabitForm] = useState(false)
   const [showGoalForm, setShowGoalForm] = useState(false)
@@ -27,29 +30,29 @@ function AppContent() {
   const [showFullQuote, setShowFullQuote] = useState(false)
   const [showSubscriptionDropdown, setShowSubscriptionDropdown] = useState(false)
   const upgradeButtonRef = useRef<HTMLButtonElement>(null)
-  
+  console.log('Current showSubscriptionDropdown state:', showSubscriptionDropdown);
+
   const { habits, goals } = useHabitStore()
   const { subscription, hasReachedLimit } = useSubscription()
 
-  // Convert your store data to the format expected by the badge system
-  const convertedHabits = habits.map(habit => ({
-    id: habit.id || Math.random().toString(),
-    title: habit.title || 'Untitled Habit',
-    category: (habit as any).category || 'General',
-    streak: (habit as any).streak || 0,
-    lastCompleted: (habit as any).lastCompleted || null,
-    completions: (habit as any).completions || []
-  }))
+  // Use useMemo to prevent recreating these arrays on every render
+const convertedHabits = useMemo(() => habits.map(habit => ({
+  id: habit.id || Math.random().toString(),
+  title: habit.title || 'Untitled Habit',
+  category: (habit as any).category || 'General',
+  streak: (habit as any).streak || 0,
+  lastCompleted: (habit as any).lastCompleted || null,
+  completions: (habit as any).completions || []
+})), [habits]);
 
-  const convertedGoals = goals.map(goal => ({
-    id: goal.id || Math.random().toString(),
-    title: goal.title || 'Untitled Goal',
-    category: (goal as any).category || 'General',
-    isCompleted: (goal as any).isCompleted || (goal as any).completed || false,
-    targetDate: (goal as any).targetDate || '2025-12-31',
-    completedAt: (goal as any).completedAt
-  }))
-
+const convertedGoals = useMemo(() => goals.map(goal => ({
+  id: goal.id || Math.random().toString(),
+  title: goal.title || 'Untitled Goal',
+  category: (goal as any).category || 'General',
+  isCompleted: (goal as any).isCompleted || (goal as any).completed || false,
+  targetDate: (goal as any).targetDate || '2025-12-31',
+  completedAt: (goal as any).completedAt
+})), [goals]);
   // Initialize badge system
   const {
     earnedBadges,
@@ -75,9 +78,12 @@ function AppContent() {
     setCurrentTab(newValue)
   }
 
-  const handleUpgrade = () => {
-    setShowSubscriptionDropdown(true)
-  }
+ const handleUpgrade = () => {
+  console.log('handleUpgrade called');
+  console.log('showSubscriptionDropdown before:', showSubscriptionDropdown);
+  setShowSubscriptionDropdown(true);
+  console.log('setShowSubscriptionDropdown(true) called');
+ }
 
   const canAddHabit = !hasReachedLimit('habits', habits.length)
   const canAddGoal = !hasReachedLimit('goals', goals.length)
@@ -107,40 +113,47 @@ function AppContent() {
           </Typography>
 
           {/* Subscription Info */}
-          <Box sx={{ mb: 2, p: 2, bgcolor: subscription.currentTier === 'free' ? 'grey.100' : 'primary.main', color: subscription.currentTier === 'free' ? 'text.primary' : 'white', borderRadius: 1 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="body2">
-                {subscription.plan.name} Plan
-              </Typography>
-              {subscription.currentTier === 'free' && (
-                <Button
-                  ref={upgradeButtonRef}
-                  variant="contained"
-                  size="small"
-                  onClick={handleUpgrade}
-                >
-                  Upgrade
-                </Button>
-              )}
-            </Box>
-          </Box>
-
-          {/* Level and Points Display */}
-          <Box sx={{ mb: 3, p: 2, bgcolor: 'primary.main', color: 'white', borderRadius: 1 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="h6">
-                Level {userLevel.level} - {userLevel.title}
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <Typography variant="body2">
-                  {totalPoints} Points
-                </Typography>
-                <Typography variant="body2">
-                  {earnedBadges.length} Badges
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
+<Box sx={{ mb: 2, p: 2, bgcolor: subscription.currentTier === 'free' ? 'grey.100' : 'primary.main', color: subscription.currentTier === 'free' ? 'text.primary' : 'white', borderRadius: 1 }}>
+  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <Typography variant="body2">
+      {subscription.plan.name} Plan - Current: {subscription.currentTier}
+    </Typography>
+    <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
+      {subscription.currentTier !== 'pro' && (
+        <Button
+          ref={upgradeButtonRef}
+          variant="contained"
+          size="small"
+          onClick={handleUpgrade}
+        >
+          Upgrade
+        </Button>
+      )}
+      {/* Reset button */}
+      <Button
+        variant="outlined"
+        size="small"
+        sx={{ 
+          color: subscription.currentTier === 'free' ? 'primary.main' : 'white',
+          borderColor: subscription.currentTier === 'free' ? 'primary.main' : 'white'
+        }}
+        onClick={() => {
+          localStorage.removeItem('subscription');
+          window.location.reload();
+        }}
+      >
+        Reset to Free
+      </Button>
+      
+      {/* Subscription Dropdown - moved here to be relative to the button container */}
+      <SubscriptionDropdown
+        isOpen={showSubscriptionDropdown}
+        onClose={() => setShowSubscriptionDropdown(false)}
+        anchorRef={upgradeButtonRef}
+      />
+    </div>
+  </Box>
+</Box>
 
           {/* Daily Quote Widget */}
           <Box sx={{ mb: 3 }}>
