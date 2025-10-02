@@ -1,8 +1,9 @@
+// src/components/GoalList.tsx - Refactored to use optimized store
+
 import { 
   Paper, 
   Box, 
   Typography, 
-  IconButton, 
   Chip,
   Stack,
   Button,
@@ -17,7 +18,13 @@ import { useState } from 'react'
 import { useHabitStore } from '../store'
 
 const GoalList = () => {
-  const { goals, habits, getGoalProgress, getHabitsForGoal, linkHabitToGoal, unlinkHabitFromGoal } = useHabitStore()
+  const goals = useHabitStore(state => state.goals)
+  const habits = useHabitStore(state => state.habits)
+  const getGoalProgress = useHabitStore(state => state.getGoalProgress)
+  const getHabitsForGoal = useHabitStore(state => state.getHabitsForGoal)
+  const linkHabitToGoal = useHabitStore(state => state.linkHabitToGoal)
+  const unlinkHabitFromGoal = useHabitStore(state => state.unlinkHabitFromGoal)
+  
   const [expandedGoal, setExpandedGoal] = useState<string | null>(null)
   const [linkingMode, setLinkingMode] = useState<string | null>(null)
 
@@ -164,12 +171,13 @@ const GoalList = () => {
                           <ListItem 
                             key={habit.id}
                             secondaryAction={
-                              <IconButton 
+                              <Button 
                                 size="small"
+                                startIcon={<LinkOff />}
                                 onClick={() => unlinkHabitFromGoal(habit.id)}
                               >
-                                <LinkOff />
-                              </IconButton>
+                                Unlink
+                              </Button>
                             }
                           >
                             <Box
@@ -236,14 +244,12 @@ const GoalList = () => {
               
               {/* Progress indicator */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <IconButton
-                  sx={{ 
-                    color: progress >= 80 ? 'success.main' : 'text.secondary'
-                  }}
-                  disabled
-                >
-                  {progress >= 80 ? <CheckCircle /> : <Flag />}
-                </IconButton>
+                <Chip
+                  icon={progress >= 80 ? <CheckCircle /> : <Flag />}
+                  label={`${progress}%`}
+                  color={progress >= 80 ? 'success' : 'default'}
+                  variant="filled"
+                />
               </Box>
             </Box>
           </Paper>
