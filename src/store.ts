@@ -1,6 +1,9 @@
+// Optimized store.ts - Streamlined version
+
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+// Ensure all optional fields have defaults
 interface Habit {
   id: string
   title: string
@@ -9,6 +12,9 @@ interface Habit {
   createdAt: string
   isActive: boolean
   goalId?: string
+  // Required fields with defaults:
+  category: string  // Default: 'General'
+  streak: number    // Default: 0
 }
 
 interface Goal {
@@ -25,17 +31,19 @@ interface Goal {
   color: string
 }
 
+interface DayProgress {
+  completed: boolean
+  completionPercentage: number
+  notes?: string
+  timestamp: number
+  journalEntry?: string
+  points?: number
+  mood?: number
+}
+
 interface Progress {
   [habitId: string]: {
-    [date: string]: {
-      completed: boolean
-      completionPercentage: number
-      notes?: string
-      timestamp: number
-      journalEntry?: string
-      points?: number
-      mood?: number
-    }
+    [date: string]: DayProgress
   }
 }
 
@@ -43,22 +51,28 @@ interface HabitStore {
   habits: Habit[]
   goals: Goal[]
   progress: Progress
-  addHabit: (habit: Omit<Habit, 'id' | 'createdAt'>) => void
+  
+  // Simplified actions
+  addHabit: (habit: Omit<Habit, 'id' | 'createdAt' | 'category' | 'streak'> & { category?: string }) => void
   addGoal: (goal: Omit<Goal, 'id' | 'createdAt'>) => void
   updateGoal: (goalId: string, updates: Partial<Goal>) => void
   linkHabitToGoal: (habitId: string, goalId: string) => void
   unlinkHabitFromGoal: (habitId: string) => void
-  toggleProgress: (habitId: string, date: string, notes?: string) => void
-  updateHabitProgress: (habitId: string, date: string, percentage: number) => void
-  updateJournalEntry: (habitId: string, date: string, entry: string, points?: number, mood?: number) => void
-  getHabitProgress: (habitId: string, date: string) => boolean
-  getHabitPercentage: (habitId: string, date: string) => number
-  getJournalEntry: (habitId: string, date: string) => { entry: string; points?: number; mood?: number } | null
+  
+  // Consolidated progress methods
+  setProgress: (habitId: string, date: string, percentage: number, notes?: string) => void
+  setJournal: (habitId: string, date: string, entry: string, points?: number, mood?: number) => void
+  
+  // Optimized getters (with caching hints)
+  getProgress: (habitId: string, date: string) => DayProgress | null
   getStreak: (habitId: string) => number
-  getTotalPoints: (habitId: string) => number
+  getHabitStats: (habitId: string) => { streak: number; totalPoints: number; totalCompletions: number }
   getGoalProgress: (goalId: string) => number
   getHabitsForGoal: (goalId: string) => Habit[]
 }
+
+// Helper to generate today's date
+const getToday = () => new Date().toISOString().split('T')[0]
 
 export const useHabitStore = create<HabitStore>()(
   persist(
@@ -72,7 +86,9 @@ export const useHabitStore = create<HabitStore>()(
           ...habitData,
           id: Date.now().toString(),
           createdAt: new Date().toISOString(),
-          isActive: true
+          isActive: true,
+          category: habitData.category || 'General',
+          streak: 0
         }
         set((state) => ({
           habits: [...state.habits, newHabit]
@@ -115,29 +131,8 @@ export const useHabitStore = create<HabitStore>()(
         }))
       },
       
-      toggleProgress: (habitId, date, notes = '') => {
-        set((state) => {
-          const current = state.progress[habitId]?.[date]?.completed || false
-          const existing = state.progress[habitId]?.[date] || {}
-          return {
-            progress: {
-              ...state.progress,
-              [habitId]: {
-                ...state.progress[habitId],
-                [date]: {
-                  ...existing,
-                  completed: !current,
-                  completionPercentage: !current ? 100 : 0,
-                  notes,
-                  timestamp: Date.now()
-                }
-              }
-            }
-          }
-        })
-      },
-      
-      updateHabitProgress: (habitId, date, percentage) => {
+      // Consolidated progress setter
+      setProgress: (habitId, date, percentage, notes = '') => {
         set((state) => {
           const existing = state.progress[habitId]?.[date] || {}
           return {
@@ -149,6 +144,7 @@ export const useHabitStore = create<HabitStore>()(
                   ...existing,
                   completed: percentage >= 100,
                   completionPercentage: percentage,
+                  notes,
                   timestamp: Date.now()
                 }
               }
@@ -157,12 +153,13 @@ export const useHabitStore = create<HabitStore>()(
         })
       },
       
-      updateJournalEntry: (habitId, date, entry, points = 0, mood = 3) => {
+      // Consolidated journal setter
+      setJournal: (habitId, date, entry, points = 0, mood = 3) => {
         set((state) => {
-          const existing = state.progress[habitId]?.[date] || { 
-            completed: false, 
-            completionPercentage: 0, 
-            timestamp: Date.now() 
+          const existing = state.progress[habitId]?.[date] || {
+            completed: false,
+            completionPercentage: 0,
+            timestamp: Date.now()
           }
           return {
             progress: {
@@ -172,8 +169,8 @@ export const useHabitStore = create<HabitStore>()(
                 [date]: {
                   ...existing,
                   journalEntry: entry,
-                  points: points,
-                  mood: mood,
+                  points,
+                  mood,
                   timestamp: Date.now()
                 }
               }
@@ -182,39 +179,27 @@ export const useHabitStore = create<HabitStore>()(
         })
       },
       
-      getHabitProgress: (habitId, date) => {
-        return get().progress[habitId]?.[date]?.completed || false
+      // Single getter for all progress data
+      getProgress: (habitId, date) => {
+        return get().progress[habitId]?.[date] || null
       },
       
-      getHabitPercentage: (habitId, date) => {
-        return get().progress[habitId]?.[date]?.completionPercentage || 0
-      },
-      
-      getJournalEntry: (habitId, date) => {
-        const entry = get().progress[habitId]?.[date]
-        if (entry?.journalEntry) {
-          return {
-            entry: entry.journalEntry,
-            points: entry.points || 0,
-            mood: entry.mood || 3
-          }
-        }
-        return null
-      },
-      
+      // Optimized streak calculation
       getStreak: (habitId) => {
         const progress = get().progress[habitId] || {}
         const today = new Date()
         let streak = 0
         
-        for (let i = 0; i < 30; i++) {
+        // Check backwards from today
+        for (let i = 0; i < 365; i++) {  // Max 1 year
           const checkDate = new Date(today)
           checkDate.setDate(today.getDate() - i)
           const dateStr = checkDate.toISOString().split('T')[0]
           
-          if ((progress[dateStr]?.completionPercentage || 0) >= 70) {
+          const dayProgress = progress[dateStr]
+          if (dayProgress && dayProgress.completionPercentage >= 70) {
             streak++
-          } else {
+          } else if (i > 0) {  // Allow today to be incomplete
             break
           }
         }
@@ -222,19 +207,25 @@ export const useHabitStore = create<HabitStore>()(
         return streak
       },
       
-      getTotalPoints: (habitId) => {
+      // Get all stats at once (reduces multiple store accesses)
+      getHabitStats: (habitId) => {
         const progress = get().progress[habitId] || {}
-        return Object.values(progress).reduce((total, day) => {
-          return total + (day.points || 0)
-        }, 0)
+        const entries = Object.values(progress)
+        
+        return {
+          streak: get().getStreak(habitId),
+          totalPoints: entries.reduce((sum, day) => sum + (day.points || 0), 0),
+          totalCompletions: entries.filter(day => day.completed).length
+        }
       },
       
       getGoalProgress: (goalId) => {
         const state = get()
-        const linkedHabits = state.habits.filter(habit => habit.goalId === goalId)
+        const linkedHabits = state.habits.filter(h => h.goalId === goalId)
         
         if (linkedHabits.length === 0) return 0
         
+        // Last 30 days progress
         const today = new Date()
         let totalScore = 0
         let maxPossibleScore = 0
@@ -261,3 +252,24 @@ export const useHabitStore = create<HabitStore>()(
     { name: 'habit-storage' }
   )
 )
+
+// Custom hooks for common patterns
+export const useHabitProgress = (habitId: string, date: string = getToday()) => {
+  return useHabitStore(state => state.getProgress(habitId, date))
+}
+
+export const useHabitStatsOptimized = (habitId: string) => {
+  return useHabitStore(state => state.getHabitStats(habitId))
+}
+
+export const useTodayProgress = (habitId: string) => {
+  const today = getToday()
+  return useHabitStore(state => {
+    const progress = state.getProgress(habitId, today)
+    return {
+      percentage: progress?.completionPercentage || 0,
+      completed: progress?.completed || false,
+      hasJournal: !!progress?.journalEntry
+    }
+  })
+}

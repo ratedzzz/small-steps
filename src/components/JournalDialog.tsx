@@ -1,3 +1,5 @@
+// src/components/JournalDialog.tsx - Refactored to use optimized store
+
 import { useState, useEffect } from 'react'
 import {
   Dialog,
@@ -28,13 +30,14 @@ const JournalDialog = ({ open, onClose, habitId, date, habitTitle }: JournalDial
   const [points, setPoints] = useState(0)
   const [mood, setMood] = useState(3)
   
-  const { updateJournalEntry, getJournalEntry } = useHabitStore()
+  const getProgress = useHabitStore(state => state.getProgress)
+  const setJournal = useHabitStore(state => state.setJournal)
 
   useEffect(() => {
     if (open) {
-      const existing = getJournalEntry(habitId, date)
-      if (existing) {
-        setJournalEntry(existing.entry)
+      const existing = getProgress(habitId, date)
+      if (existing?.journalEntry) {
+        setJournalEntry(existing.journalEntry)
         setPoints(existing.points || 0)
         setMood(existing.mood || 3)
       } else {
@@ -43,17 +46,16 @@ const JournalDialog = ({ open, onClose, habitId, date, habitTitle }: JournalDial
         setMood(3)
       }
     }
-  }, [open, habitId, date, getJournalEntry])
+  }, [open, habitId, date, getProgress])
 
   const handleSave = () => {
-    updateJournalEntry(habitId, date, journalEntry, points, mood)
+    setJournal(habitId, date, journalEntry, points, mood)
     onClose()
   }
 
   const formatDate = (dateStr: string) => {
-    // Parse the date string and create date in local timezone
     const [year, month, day] = dateStr.split('-').map(Number)
-    const date = new Date(year, month - 1, day) // month - 1 because JS months are 0-indexed
+    const date = new Date(year, month - 1, day)
     
     return date.toLocaleDateString('en-US', { 
       weekday: 'long', 
